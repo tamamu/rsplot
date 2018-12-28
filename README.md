@@ -1,3 +1,3 @@
-# RSPLOT
+# rsplot
 
-Plot for paper
+Plot library for Rust
