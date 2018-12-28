@@ -5,3 +5,5 @@ authors = ["tamamu <tamamu.1r1s@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+png = "0.13.2"
+cairo-rs = { version = "0.5.0", features = ["png"] }
