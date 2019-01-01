@@ -1,5 +1,10 @@
 
-pub type PlotUnit = f32;
+use std::f64::consts::PI;
+
+extern crate cairo;
+use cairo::{ImageSurface, Format, Context};
+
+pub type PlotUnit = f64;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Point2D {
@@ -73,3 +78,26 @@ impl Scatter2DProperty {
 }
 
 pub type Scatter2D = Plot2D<Scatter2DProperty>;
+
+
+pub trait Drawable {
+    fn draw(&self, ctx: &mut Context) {
+        unimplemented!();
+    }
+}
+
+impl<T: Drawable> Plot2D<T> {
+    pub fn render(&self, ctx: &mut Context) {
+        self.prop.draw(ctx);
+    }
+}
+
+impl Drawable for Scatter2DProperty {
+    fn draw(&self, ctx: &mut Context) {
+        println!("{:?}", self.unit_x);
+        for p in &self.data {
+            ctx.arc(p.x, p.y, 4f64, 0., 2.*PI);
+            ctx.fill();
+        }
+    }
+}
