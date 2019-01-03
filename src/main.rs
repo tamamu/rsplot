@@ -8,11 +8,15 @@ use cairo::{ImageSurface, Format, Context, Matrix};
 use std::fs::File;
 
 fn main() {
+    let x: Vec<f64> = (0..629).into_iter().map(|i| i as f64).collect();
+    let data = x.iter().map(|i| Point2D {x: *i*0.01, y: (i*0.01).sin()}).collect();
+    /*
     let data = vec![
-        Point2D {x: 32., y: 40.},
+        Point2D {x: 0., y: 40.},
         Point2D {x: 50., y: 100.},
     ];
-    let prop = Scatter2DProperty::new(data, 1.0, 1.0);
+    */
+    let prop = Point2DProperty::new(data, 1.0, 1.0);
     let mut plot = Plot2D::new(prop);
     plot.width = 400;
     plot.height = 400;

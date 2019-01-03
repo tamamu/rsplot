@@ -81,16 +81,14 @@ impl<T> Plot2D<T> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Scatter2DProperty {
+pub struct Point2DProperty {
     pub data: Vec<Point2D>,
-    pub unit_x: PlotUnit,
-    pub unit_y: PlotUnit,
     pub lim_x: (PlotUnit, PlotUnit),
     pub lim_y: (PlotUnit, PlotUnit),
     pub color: Color,
 }
 
-impl Scatter2DProperty {
+impl Point2DProperty {
     pub fn new(data: Vec<Point2D>, unit_x: PlotUnit, unit_y: PlotUnit) -> Self {
         let mut lim_x = (0., 0.);
         let mut lim_y = (0., 0.);
@@ -100,8 +98,6 @@ impl Scatter2DProperty {
         }
         Self {
             data: data,
-            unit_x: unit_x,
-            unit_y: unit_y,
             lim_x: lim_x,
             lim_y: lim_y,
             color: Color::RGB(0., 0., 0.),
@@ -109,7 +105,7 @@ impl Scatter2DProperty {
     }
 }
 
-pub type Scatter2D = Plot2D<Scatter2DProperty>;
+pub type PointPlot = Plot2D<Point2DProperty>;
 
 
 pub trait Drawable {
@@ -136,7 +132,7 @@ impl<T: Drawable> Plot2D<T> {
     }
 }
 
-impl Drawable for Scatter2DProperty {
+impl Drawable for Point2DProperty {
     fn draw(&self, ctx: &Context, width: f64, height: f64) {
         let ll_x = self.lim_x.0;
         let ul_x = self.lim_x.1;
@@ -146,18 +142,30 @@ impl Drawable for Scatter2DProperty {
         let ratio_y = height / (ul_y - ll_y);
         ctx.set_font_size(24.);
         ctx.move_to(-50., 0.);
-        ctx.show_text(&ul_x.to_string());
-        ctx.move_to(-50., height);
-        ctx.show_text(&ll_x.to_string());
-        ctx.move_to(0., height+50.);
-        ctx.show_text(&ll_y.to_string());
-        ctx.move_to(width, height+50.);
         ctx.show_text(&ul_y.to_string());
+        ctx.move_to(-50., height);
+        ctx.show_text(&ll_y.to_string());
+        ctx.move_to(0., height+50.);
+        ctx.show_text(&ll_x.to_string());
+        ctx.move_to(width, height+50.);
+        ctx.show_text(&ul_x.to_string());
         set_context_color(ctx, self.color);
+        /*
         for p in &self.data {
             println!("{:?}", p);
             ctx.arc((p.x-ll_x)*ratio_x, (ul_y-(p.y-ll_y))*ratio_y, 4f64, 0., 2.*PI);
             ctx.fill();
+        }
+        */
+        let count = self.data.len();
+        if (count >= 2) {
+            let p = self.data[0];
+            ctx.move_to((p.x-ll_x)*ratio_x, (ul_y-(p.y-ll_y)+(ul_y - ll_y)*0.5)*ratio_y);
+            for i in 1..self.data.len() {
+                let p = self.data[i];
+                ctx.line_to((p.x-ll_x)*ratio_x, (ul_y-(p.y-ll_y)+(ul_y - ll_y)*0.5)*ratio_y);
+            }
+            ctx.stroke();
         }
     }
 }
