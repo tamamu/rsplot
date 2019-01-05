@@ -9,7 +9,9 @@ use std::fs::File;
 
 fn main() {
     let x: Vec<f64> = (0..629).into_iter().map(|i| i as f64).collect();
-    let data = x.iter().map(|i| Point2D {x: *i*0.01, y: (i*0.01).sin()}).collect();
+    let mut data: Vec<Point2D> = x.iter().map(|i| Point2D {x: *i*0.01, y: (i*0.01).sin()}).collect();
+    data[0].y = 4.;
+    round(1.0, 1.0001);
     /*
     let data = vec![
         Point2D {x: 0., y: 40.},

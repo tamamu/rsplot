@@ -7,6 +7,8 @@ use cairo::{ImageSurface, Format, Context};
 
 pub type PlotUnit = f64;
 
+static ROUNDING_ERROR: PlotUnit = 100.;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Point2D {
     pub x: PlotUnit,
@@ -23,6 +25,59 @@ pub struct Line2D {
 pub enum Color {
     RGB(f64, f64, f64),
     RGBA(f64, f64, f64, f64),
+}
+
+fn is_larger_than_one(a: f64) -> bool {
+    (a - 1f64).is_sign_positive()
+}
+
+fn dec_pos(a: PlotUnit) -> usize {
+    let mut x = a.abs();
+    let mut pos: usize = 1;
+    if is_larger_than_one(x) {
+        pos = 0;
+        while is_larger_than_one(x) {
+            x /= 1e2;
+            pos += 1;
+        }
+    }
+    pos
+}
+
+pub fn round(l: PlotUnit, u: PlotUnit) -> (String, String) {
+    let mut delta = u - l;
+    let mut sig = 1;
+    if (delta-1f64).is_sign_positive() {
+        while (delta-1f64).is_sign_positive() {
+            sig += 1;
+            delta /= 2f64;
+        }
+    } else {
+        while (delta-1f64).is_sign_negative() {
+            sig += 1;
+            delta *= 2f64;
+        }
+    }
+    println!("{} {} ({})", l, u, sig);
+    let mut ll = format!("{:0<1$}", (l * 1e2f64.powi(sig-1)).round() as i32, sig as usize);
+    let mut uu = format!("{:0<1$}", (u * 1e2f64.powi(sig-1)).round() as i32, sig as usize);
+    if ll.starts_with("-") {
+        ll.truncate((sig+1) as usize);
+        ll.insert(dec_pos(l)+1, '.');
+    } else {
+        ll.truncate(sig as usize);
+        ll.insert(dec_pos(l), '.');
+    }
+    if uu.starts_with("-") {
+        uu.truncate((sig+1) as usize);
+        uu.insert(dec_pos(u)+1, '.');
+    } else {
+        uu.truncate(sig as usize);
+        uu.insert(dec_pos(u), '.');
+    }
+    println!("{}, {}", ll, uu);
+
+    (ll, uu)
 }
 
 fn set_context_color(ctx: &Context, color: Color) {
@@ -140,15 +195,18 @@ impl Drawable for Point2DProperty {
         let ul_y = self.lim_y.1;
         let ratio_x = width / (ul_x - ll_x);
         let ratio_y = height / (ul_y - ll_y);
+        let (ll_xs, ul_xs) = round(ll_x, ul_x);
+        let (ll_ys, ul_ys) = round(ll_y, ul_y);
         ctx.set_font_size(24.);
         ctx.move_to(-50., 0.);
-        ctx.show_text(&ul_y.to_string());
+        ctx.show_text(&ul_ys);
         ctx.move_to(-50., height);
-        ctx.show_text(&ll_y.to_string());
+        ctx.show_text(&ll_ys);
         ctx.move_to(0., height+50.);
-        ctx.show_text(&ll_x.to_string());
+        ctx.show_text(&ll_xs);
         ctx.move_to(width, height+50.);
-        ctx.show_text(&ul_x.to_string());
+        ctx.show_text(&ul_xs);
+        round(ll_y, ul_y);
         set_context_color(ctx, self.color);
         /*
         for p in &self.data {
@@ -160,10 +218,10 @@ impl Drawable for Point2DProperty {
         let count = self.data.len();
         if (count >= 2) {
             let p = self.data[0];
-            ctx.move_to((p.x-ll_x)*ratio_x, (ul_y-(p.y-ll_y)+(ul_y - ll_y)*0.5)*ratio_y);
+            ctx.move_to((p.x-ll_x)*ratio_x, height-(p.y-ll_y)*ratio_y);
             for i in 1..self.data.len() {
                 let p = self.data[i];
-                ctx.line_to((p.x-ll_x)*ratio_x, (ul_y-(p.y-ll_y)+(ul_y - ll_y)*0.5)*ratio_y);
+                ctx.line_to((p.x-ll_x)*ratio_x, height-(p.y-ll_y)*ratio_y);
             }
             ctx.stroke();
         }
